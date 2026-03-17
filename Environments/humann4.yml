@@ -1,0 +1,10 @@
+name: humann4
+channels:
+  - biobakery
+  - bioconda
+  - conda-forge
+  - defaults
+dependencies:
+  - python=3.12
+  - humann=4.0.0a1
+  - metaphlan=4.1.1

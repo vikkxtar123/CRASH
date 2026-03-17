@@ -1,0 +1,16 @@
+name: metaphlan
+channels:
+  - bioconda
+  - conda-forge
+  - defaults
+
+dependencies:
+  - python=3.10
+  - metaphlan
+  - bowtie2
+  - samtools
+  - pandas
+  - matplotlib
+  - seaborn
+  - gzip
+  - pigz        # fast compression/decompression

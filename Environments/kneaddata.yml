@@ -1,0 +1,20 @@
+name: kneaddata
+channels:
+  - conda-forge
+  - bioconda
+  - defaults
+
+dependencies:
+  # Core
+  - python=3.10
+  - kneaddata
+  - bowtie2
+  - trimmomatic
+
+  # Useful QC tools
+  - fastqc
+  - multiqc
+
+  # General bioinfo utilities
+  - samtools
+  - pigz
