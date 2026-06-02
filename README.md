@@ -1,172 +1,471 @@
 # CRASH
-## Strain-Level Profiling of Gut Microbiomes in Hematological Cancer - CRASH (Cancer-associated gut micRobiome Analysis of Strains in Haematological patients)
 
-This is a multilayered metagenomics pipeline for taxonomic, strain-level, and functional profiling of the gut microbiome across haemotological cancer datasets. Developed as part of a MSc Bioinformatics thesis at Lund University.
+## Cancer-associated gut micRobiome Analysis of Strains in Haematological patients
 
-This pipeline makes use of three complementary profiling approaches:
-- MetaPhlAn4: Marker-based species-level taxonomic profiling
-- StrainPhlAn4: Strain-level phylogenetic profiling
-- HUMAnN4: Functional profiling (gene families and metabolic pathways)
+CRASH is a reproducible bioinformatics workflow developed for my MSc Bioinformatics thesis at Lund University. The project analyses publicly available whole-genome shotgun metagenomic datasets from haematological cancer patients and healthy controls.
 
-An independent taxonomic profiling approach for cross-validation and depth: 
-- Kraken2 + Bracken: k-mer based taxonomic classification.
+The workflow was designed to study gut microbiome dysbiosis across multiple analysis layers:
 
-GitHub repo can be found here.
+- species-level taxonomic composition
+- strain-level phylogenetic structure
+- functional potential
+- antimicrobial resistance gene profiles
+- cohort-wise and cross-cohort statistical patterns
 
-## Installation
+The main biological question is whether haematological cancer is associated with reproducible gut microbiome changes across independent cohorts, and whether these changes are reflected at the taxonomic, functional, AMR, and strain levels.
 
-### Clone the repository:
+## Project overview
 
-```
-git clone https://github.com/vikkxtar123/CRASH.git
-cd CRASH
-```
-### Installing Anaconda
-If you don't have Anaconda installed, you can download and install it by following these steps:
+The workflow was applied to four analytical cohorts:
 
-- Visit the official Anaconda website.
-- Download the installer for your operating system (Windows, macOS, or Linux).
-- Follow the installation instructions provided for your platform.
-- After installation, you can verify that Anaconda is installed correctly by running:
+- Belgian AML cohort
+- Polish AML cohort
+- Polish lymphoma cohort
+- Chinese NKTCL cohort
 
-```
-conda --version
-```
-### Setting up the Conda Environment
+The pipeline combines several complementary tools:
 
-To run the pipeline, multiple conda environments are required. Profiles of these environments are found under the ` environments/ ` directory. They can be installed using: 
-```
-conda env create -f environments/kneaddata.yml # For KneadData (QC)
-conda env create -f environments/metaphlan.yml # For MetaPhlAn4 and StrainPhlAn4
-conda env create -f environments/krakentools.yml # For Kraken2 and Bracken
-conda env create -f environments/humann4.yml # For HUMAnN4
-```
+- **KneadData** for read trimming and host decontamination
+- **MetaPhlAn4** for marker-based species-level profiling
+- **StrainPhlAn4** for strain-level phylogenetic analysis
+- **HUMAnN4** for gene-family, KO, and pathway-level functional profiling
+- **deepARG** for antimicrobial resistance gene profiling
+- **Kraken2 + Bracken** as an independent taxonomic profiling check
+- **R-based analysis** for diversity analysis, differential abundance testing, D-statistics, and figure generation
 
-## Usage
+MetaPhlAn4 was used as the primary taxonomic profiling method. Kraken2/Bracken outputs were used as complementary checks and were not the main basis for the biological interpretation.
 
-At this point, the directory structure should be as follows:
- 
-```
+## Repository structure
+
+```text
 CRASH/
 │
 ├── scripts/
 │   ├── 00_setup/
-│   │   ├── parallel_downloader.sh       # Parallel FASTQ download via ENA (GNU parallel)
-│   │   ├── download_fastq.sh            # Per-accession download worker (called by parallel_downloader.sh)
-│   │   ├── metaphlan_installer.sh       # Install MetaPhlAn mpa_vJun23 database
-│   │   └── kraken_installer.sh          # Download and install k2_pluspf Kraken2 database
-│   ├── 01_kneaddata/                    # QC — adapter trimming and host decontamination
+│   │   ├── parallel_downloader.sh
+│   │   ├── download_fastq.sh
+│   │   ├── metaphlan_installer.sh
+│   │   └── kraken_installer.sh
+│   │
+│   ├── 01_kneaddata/
+│   │   └── QC, adapter trimming, and host decontamination scripts
+│   │
 │   ├── 02_metaphlan4/
-│   │   ├── metaphlan.sh                 # MetaPhlAn4 farm (Jun23 DB) + inline sample2markers
-│   │   └── humann_metaphlan.sh          # MetaPhlAn4 farm (Oct22 DB, profiling only for HUMAnN4)
+│   │   ├── metaphlan.sh
+│   │   └── humann_metaphlan.sh
+│   │
 │   ├── 03_strainphlan4/
-│   │   ├── sample2markers.sh            # Standalone sample2markers farm (from bowtie2 mapouts)
-│   │   ├── strainphlan_master.sh        # Master farm — clade extraction + parallel tree building
-│   │   ├── strainphlan_worker.sh        # Per-clade worker (called by master via srun)
-│   │   └── strainphlan.py     # Summarise all clade outputs into a single TSV
+│   │   ├── sample2markers.sh
+│   │   ├── strainphlan_master.sh
+│   │   ├── strainphlan_worker.sh
+│   │   └── strainphlan.py
+│   │
 │   ├── 04_humann4/
-│   │   └── humann.sh                    # HUMAnN4 parallel farm (2 workers × 24 threads)
-│   └── 05_kraken2_bracken/
-│       ├── kraken.sh                    # Kraken2 + Bracken farm (6 workers × 8 threads)
-│       └── kraken2mpa.sh               # Parse Bracken outputs into MetaPhlAn-style tables
+│   │   └── humann.sh
+│   │
+│   ├── 05_kraken2_bracken/
+│   │   ├── kraken.sh
+│   │   └── kraken2mpa.sh
+│   │
+│   └── 06_deeparg/
+│       └── deepARG profiling and post-processing scripts
+│
 ├── R/
-│   ├── beta_diversity/                  # PCoA, PERMANOVA, betadisper
-│   ├── maaslin2/                        # Differential abundance analysis
-│   └── strainphlan/                     # Phylogenetic D-test (caper::phylo.d)
-├── envs/                                # Conda environment YAML files
-├── docs/                                # Pipeline notes and known gotchas
-├── results/                             # Output tables and figures (not tracked by git)
-├── logs/                                # SLURM log files (not tracked by git)
+│   ├── alpha_diversity/
+│   ├── beta_diversity/
+│   ├── differential_abundance/
+│   ├── functional_analysis/
+│   ├── amr_analysis/
+│   ├── strainphlan/
+│   └── plotting/
+│
+├── environments/
+│   └── Conda environment YAML files
+│
+├── metadata/
+│   └── sample metadata and accession lists
+│
+├── docs/
+│   └── pipeline notes, troubleshooting, and known issues
+│
+├── results/
+│   └── output tables and figures
+│
+├── logs/
+│   └── SLURM log files
+│
 └── README.md
 ```
-Download the required databases:
- 
-```
-# MetaPhlAn / StrainPhlAn
-metaphlan --install --index mpa_vJun23_CHOCOPhlAnSGB_202403 --bowtie2db <DB_DIR>
- 
-# HUMAnN
-humann_databases --download chocophlan full <DB_DIR>
-humann_databases --download uniref uniref90_diamond <DB_DIR>
- 
-# Kraken2
-kraken2-build --download-library ... --db <DB_DIR>/k2_pluspf
+
+Note: large intermediate files are not tracked by Git. This includes cleaned FASTQ files, Bowtie2 outputs, HUMAnN intermediate files, Kraken reports, and large temporary mapping files.
+
+## Installation
+
+Clone the repository:
+
+```bash
+git clone https://github.com/vikkxtar123/CRASH.git
+cd CRASH
 ```
 
-Download raw FASTQ data:
- 
+## Conda environments
+
+The workflow uses separate Conda environments for different pipeline modules. Environment YAML files are stored in the `environments/` directory.
+
+```bash
+conda env create -f environments/kneaddata.yml
+conda env create -f environments/metaphlan.yml
+conda env create -f environments/krakentools.yml
+conda env create -f environments/humann4.yml
+conda env create -f environments/deeparg.yml
+conda env create -f environments/r_analysis.yml
 ```
-# Edit parallel_downloader.sh to point at your SRA ID list, then:
+
+Activate the required environment before running each pipeline step.
+
+Example:
+
+```bash
+conda activate metaphlan
+```
+
+## Required databases
+
+The pipeline requires databases for MetaPhlAn4, HUMAnN4, Kraken2, host decontamination, and deepARG.
+
+### MetaPhlAn4 / StrainPhlAn4
+
+This analysis used the `mpa_vJun23_CHOCOPhlAnSGB_202403` database. Install that specific version so results are reproducible:
+
+```bash
+metaphlan --install \
+    --index mpa_vJun23_CHOCOPhlAnSGB_202403 \
+    --bowtie2db <METAPHLAN_DB_DIR>
+```
+
+StrainPhlAn4 uses the same database; no separate download is required.
+
+### HUMAnN4
+
+The full ChocoPhlAn nucleotide database and the UniRef90 DIAMOND protein database were used:
+
+```bash
+humann_databases --download chocophlan full <HUMANN_DB_DIR>
+humann_databases --download uniref uniref90_diamond <HUMANN_DB_DIR>
+```
+
+KO regrouping uses the utility mapping bundled with HUMAnN4 (`humann_regroup_table`); no extra download is required.
+
+### Human host database for KneadData
+
+```bash
+kneaddata_database --download human_genome bowtie2 <KNEADDATA_DB_DIR>
+```
+
+### Kraken2
+
+This analysis used the prebuilt **PlusPF** index (archaea, bacteria, viral, plasmid, human, UniVec_Core, protozoa, and fungi). Download the prebuilt index rather than building a custom database, so the Kraken2/Bracken validation results are reproducible:
+
+```bash
+mkdir -p <KRAKEN_DB_DIR> && cd <KRAKEN_DB_DIR>
+wget https://genome-idx.s3.amazonaws.com/kraken/k2_pluspf_<YYYYMMDD>.tar.gz
+tar -xzf k2_pluspf_<YYYYMMDD>.tar.gz
+```
+
+Replace `<YYYYMMDD>` with the index build date used in your analysis. Available versions are listed at https://benlangmead.github.io/aws-indexes/k2.
+
+### deepARG
+
+Install or download the deepARG database according to the deepARG documentation. The path to the database should be updated in the deepARG scripts before running.
+
+## Input data
+
+Raw FASTQ files were downloaded from public repositories using accession lists stored under `metadata/` or `scripts/00_setup/`.
+
+Example:
+
+```bash
 sbatch scripts/00_setup/parallel_downloader.sh
 ```
- 
-SRA ID lists for each dataset are provided in `scripts/00_setup/` as `<ACCESSION>_sra_ids.txt`.
 
-### Usage
- 
-All SLURM scripts use a 6-worker farm pattern on a single 48-core COSMOS node unless otherwise noted. Per-sample skip logic is included — safe to resubmit if a job is interrupted.
- 
-### 1. Quality control
- 
-Quality control is performed with KneadData (Trimmomatic + human host removal). Scripts are in `scripts/01_kneaddata/`.
- 
-### 2. Taxonomic profiling
- 
+The download script uses GNU parallel and is designed to download multiple SRA/ENA accessions efficiently.
+
+Before running, edit the script to point to the correct accession list and output directory.
+
+## Pipeline usage
+
+Most scripts were written for the LUNARC COSMOS cluster and use SLURM. The general design is a worker-farm pattern, usually using one 48-core node split into multiple parallel workers.
+
+Many scripts include skip logic, so interrupted jobs can usually be resubmitted without rerunning completed samples.
+
+## 1. Quality control
+
+Quality control was performed using KneadData.
+
+Main steps:
+
+- adapter trimming
+- low-quality read removal
+- human host read removal
+- output of cleaned paired-end FASTQ files
+
+Run:
+
+```bash
+sbatch scripts/01_kneaddata/kneaddata.sh
 ```
+
+Expected outputs:
+
+```text
+cleaned_fastq/
+kneaddata_logs/
+fastqc_reports/
+```
+
+## 2. Taxonomic profiling with MetaPhlAn4
+
+MetaPhlAn4 was used for the primary species-level taxonomic profiling.
+
+```bash
 sbatch scripts/02_metaphlan4/metaphlan.sh
 ```
- 
-Runs MetaPhlAn4 against the `mpa_vJun23_CHOCOPhlAnSGB_202403` database using a 6-worker farm (6 × 8 threads). Saves `--bowtie2out` and runs `sample2markers.py` inline on the local SAM before cleanup — this avoids writing large SAM files to shared storage. Profiles, bowtie2 mapouts, and consensus marker `.json.bz2` files are all written to storage.
- 
-`humann_metaphlan.sh` is an alternative run against the Oct22 database (`mpa_vOct22_CHOCOPhlAnSGB_202403`) for cross-version comparison. It uses `--no_map` and does not produce alignment files.
- 
-### 3. Strain-level profiling
- 
-If `metaphlan.sh` was used, consensus markers are already produced. If starting from existing bowtie2 mapouts:
- 
-```
-sbatch scripts/03_strainphlan4/sample2markers.sh
-```
- 
-Then run the StrainPhlAn farm:
- 
-```
+
+This step produces:
+
+- per-sample MetaPhlAn profiles
+- Bowtie2 mapping outputs
+- marker files for StrainPhlAn
+- merged species-level abundance tables
+
+The script also runs `sample2markers.py` where applicable, so the MetaPhlAn mapping output can be reused for strain-level analysis.
+
+## 3. Strain-level profiling with StrainPhlAn4
+
+If marker files were already generated during MetaPhlAn profiling, run the StrainPhlAn workflow directly:
+
+```bash
 sbatch scripts/03_strainphlan4/strainphlan_master.sh
 ```
- 
-The master script extracts the clade list using `--print_clades_only`, assigns GTDB names via the SGB2GTDB mapping file, then dispatches one `strainphlan_worker.sh` per clade via `srun --exclusive`. Workers run `extract_markers.py` and `strainphlan` sequentially per clade. Failed clades are logged to `failures.log`.
- 
-After all trees are built, summarise results:
- 
+
+If starting from existing Bowtie2 mapouts, first generate marker files:
+
+```bash
+sbatch scripts/03_strainphlan4/sample2markers.sh
 ```
+
+The StrainPhlAn master script:
+
+- extracts eligible clades
+- maps SGB names to GTDB/species names where possible
+- dispatches one worker per clade
+- builds species-level strain phylogenies
+- logs failed clades
+
+Summarise tree outputs:
+
+```bash
 python scripts/03_strainphlan4/strainphlan.py \
-    --root  /path/to/Output \
+    --root /path/to/strainphlan/output \
     --names /path/to/output_sgb_names.tsv \
-    --out   strainphlan_summary.tsv
+    --out strainphlan_summary.tsv
 ```
- 
-This produces a single TSV with per-clade stats: samples in tree, markers used, polymorphic rates, and species/genus names.
- 
-### 4. Functional profiling
- 
+
+Expected outputs:
+
+```text
+strainphlan_trees/
+strainphlan_summary.tsv
+failure_logs/
 ```
+
+## 4. Functional profiling with HUMAnN4
+
+HUMAnN4 was used to profile gene families, KO features, and MetaCyc pathways.
+
+```bash
 sbatch scripts/04_humann4/humann.sh
 ```
- 
-Runs HUMAnN4 with 2 concurrent workers (24 threads each) on a single 48-core node. Samples are processed using pre-computed MetaPhlAn profiles (`--taxonomic-profile`) to skip re-profiling. Uses `--prescreen-threshold 1.0` to prevent parallel bowtie2-build workers from exhausting `/local/slurmtmp`. Intermediate files are written to `SNIC_TMP` and cleaned up after each sample.
- 
-### 5. Independent taxonomic profiling
- 
+
+The workflow uses precomputed MetaPhlAn profiles as taxonomic input where possible.
+
+Expected outputs:
+
+```text
+genefamilies.tsv
+pathabundance.tsv
+pathcoverage.tsv
+KO_tables/
+MetaCyc_pathway_tables/
 ```
+
+Post-processing scripts were used to:
+
+- join per-sample tables
+- normalise gene-family and KO tables to CPM
+- convert pathway outputs to relative abundance
+- apply prevalence filtering
+- prepare input tables for R analysis
+
+## 5. Antimicrobial resistance profiling with deepARG
+
+deepARG was used to profile antimicrobial resistance gene classes from metagenomic data.
+
+Run:
+
+```bash
+sbatch scripts/06_deeparg/deeparg.sh
+```
+
+Expected outputs:
+
+```text
+deeparg_raw_outputs/
+ARG_type_tables/
+ARG_subtype_tables/
+deeparg_summary_tables/
+```
+
+The final ARG tables were used for:
+
+- ARG alpha diversity
+- ARG beta diversity
+- differential abundance testing
+- cross-cohort consensus analysis
+
+## 6. Independent taxonomic profiling with Kraken2 + Bracken
+
+Kraken2 and Bracken were used as an independent taxonomic profiling check.
+
+```bash
 sbatch scripts/05_kraken2_bracken/kraken.sh
 ```
- 
-Runs Kraken2 + Bracken (species and genus level) using a 6-worker farm. The Kraken2 database is staged once to local disk at job start to avoid repeated Lustre I/O across workers.
- 
+
 Parse outputs into MetaPhlAn-style tables:
- 
-```
+
+```bash
 sbatch scripts/05_kraken2_bracken/kraken2mpa.sh
 ```
- 
-This produces both Bracken-derived relative abundance tables and `kreport2mpa.py`-derived full-taxonomy MPA tables for direct comparison with MetaPhlAn4 output.
+
+These outputs were used for comparison and quality checking, but MetaPhlAn4 was used as the primary taxonomic profiling method in the thesis.
+
+## 7. Statistical analysis in R
+
+R scripts are stored in the `R/` directory.
+
+The main statistical analyses include:
+
+- alpha diversity testing
+- Bray-Curtis and Jaccard beta diversity
+- PERMANOVA using `adonis2`
+- dispersion testing using `betadisper`
+- differential abundance analysis using MaAsLin2
+- supporting Wilcoxon rank-sum testing
+- supporting ALDEx2 analysis
+- Fritz and Purvis D-statistics for strain-level clustering
+- cross-cohort consensus analysis
+- figure generation
+
+The main differential abundance framework used three methods:
+
+1. MaAsLin2 as the anchor model
+2. Wilcoxon rank-sum test as a non-parametric support method
+3. ALDEx2 as a compositional support method
+
+High-confidence features were defined based on MaAsLin2 significance and directional support from at least one supporting method.
+
+## Main output files
+
+The expected final outputs include:
+
+```text
+results/
+├── taxonomic_profiles/
+├── functional_profiles/
+├── amr_profiles/
+├── strainphlan/
+├── differential_abundance/
+├── alpha_diversity/
+├── beta_diversity/
+├── consensus_tables/
+└── figures/
+```
+
+Main figure types generated by the workflow:
+
+- cohort overview plots
+- alpha diversity boxplots
+- beta diversity PCoA plots
+- taxonomic differential abundance barplots
+- consensus heatmaps
+- functional KO/pathway plots
+- ARG class enrichment plots
+- strain-level D-statistic summaries
+
+## Reproducibility notes
+
+This repository is intended to make the analysis workflow transparent and reproducible. The scripts are organised by analysis step and can be rerun from public sequencing accessions.
+
+However, some paths are specific to the LUNARC COSMOS cluster and may need to be edited before running elsewhere. These include:
+
+- project storage paths
+- database paths
+- SLURM account names
+- temporary directory paths
+- Conda environment paths
+
+Large intermediate files are excluded from Git because of storage size. These files can be regenerated using the provided scripts, accession lists, and database setup instructions.
+
+## Data availability
+
+The sequencing datasets used in this project are publicly available under the following accessions:
+
+- **PRJNA813705** — Belgian AML cohort (NCBI SRA / ENA)
+- **PRJNA1116523 and PRJNA885289** — Polish AML and lymphoma cohorts (NCBI SRA / ENA)
+- **CRA007433** — Chinese NKTCL cohort (NGDC Genome Sequence Archive)
+
+The repository contains:
+
+- scripts
+- environment files
+- post-processing scripts
+- R analysis scripts
+- figure-generation scripts
+
+The repository does not contain:
+
+- raw FASTQ files
+- cleaned FASTQ files
+- large Bowtie2 mapout files
+- HUMAnN intermediate outputs
+- Kraken2 databases
+- MetaPhlAn/HUMAnN/deepARG databases
+
+## Thesis context
+
+This repository was developed as part of the MSc thesis:
+
+**Multi-cohort metagenomic profiling of gut microbiome dysbiosis in haematological cancer patients**
+
+MSc Bioinformatics  
+Lund University
+
+The workflow was developed to support reproducible analysis of taxonomic, functional, antimicrobial resistance, and strain-level patterns in gut metagenomes from haematological cancer cohorts.
+
+## Notes
+
+This pipeline was developed for research and thesis purposes. It is not intended as a clinical diagnostic tool.
+
+Some scripts may require manual path editing before use on a different system. The workflow is most directly reproducible on an HPC system with SLURM and Conda available.
+
+## Citation
+
+If using or adapting this workflow, please cite the GitHub repository and the associated MSc thesis.
+
+```text
+Natarajan J. (2026). Multi-cohort metagenomic profiling of gut microbiome dysbiosis in haematological cancer patients. MSc Thesis, Lund University.
+```
+
+## Contact
+
+For questions about the workflow, open an issue on the GitHub repository or contact the repository owner.
