@@ -70,7 +70,6 @@ CRASH/
 │   ├── DeepARG_2.R             # deepARG cross-cohort overlap
 │   ├── DeepARG_3.R             # deepARG figures
 │   ├── humann_figures.R        # KO heatmap with KEGG enzyme annotations
-│   ├── humann_figures_2.R      # pathway volcano 
 │   └── Strainphlan.R           # StrainPhlAn D-test (MODE: AML / Lymphoma / all)
 │
 ├── environments/               # Conda environment YAML files
