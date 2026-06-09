@@ -73,7 +73,7 @@ CRASH/
 │   └── Strainphlan.R           # StrainPhlAn D-test (MODE: AML / Lymphoma / all)
 │
 ├── environments/               # Conda environment YAML files
-├── logs/                       # SLURM log files
+├── metadata/                   # Metadata for all cohorts
 └── README.md
 ```
 
