@@ -270,8 +270,8 @@ High-confidence features require MaAsLin2 significance plus directional support 
 
 The scripts are organised by analysis step and can be rerun from public sequencing accessions. Some settings are environment-specific and must be edited before running elsewhere:
 
-- HPC paths, database paths, SLURM account, and scratch directories live in `scripts/config.sh`.
-- R scripts use local Windows paths (`D:/MasterThesis/Vik/...`) and a `DATASET` / `LEVEL` / `MODE` variable set at the top of each file — edit these before sourcing.
+- HPC paths, database paths, SLURM account, and scratch directories live in `scripts/config.sh`. Replace the paths on SLURM with your usage case, they have been commented or edited out from all the scripts.
+- R scripts use local Windows paths and a `DATASET` / `LEVEL` / `MODE` variable set at the top of each file — edit these before sourcing.
 - After uploading any Windows-edited shell script to the cluster, run `dos2unix` on it.
 
 ## Data availability
