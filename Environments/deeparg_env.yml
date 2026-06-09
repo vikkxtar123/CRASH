@@ -1,0 +1,14 @@
+name: deeparg_env
+channels:
+  - bioconda
+  - conda-forge
+  - defaults
+dependencies:
+  - python=2.7.18
+  - deeparg=1.0.4
+  - bowtie2
+  - vsearch
+  - diamond
+  - biopython
+  - numpy
+  - pandas
