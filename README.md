@@ -255,7 +255,7 @@ The R scripts follow a consistent three-script pattern per data layer:
 - **Script 2** — cross-cohort consensus overlap, fed by the high-confidence hits from Script 1.
 - **Script 3** — cross-cohort summary figures.
 
-`MetaAnalysis_*.R` covers the primary MetaPhlAn layer, `KrakenAnalysis_*.R` the Kraken validation layer, and `DeepARG_*.R` the AMR layer. `MetaAnalysis_Tables.R` builds the thesis tables (cohort summary, consensus species, diversity, DA triangulation counts, curated functional groups) and writes a combined `.xlsx`. `humann_figures.R` and `humann_figures_2.R` produce the functional figures. `Vik_Strainphlan.R` runs the strain-level D-test.
+`MetaAnalysis_*.R` covers the primary MetaPhlAn layer, `KrakenAnalysis_*.R` the Kraken validation layer, and `DeepARG_*.R` the AMR layer. `MetaAnalysis_Tables.R` builds the thesis tables (cohort summary, consensus species, diversity, DA triangulation counts, curated functional groups) and writes a combined `.xlsx`. `humann_figures.R` produces the functional figures. `Strainphlan.R` runs the strain-level D-test.
 
 The main differential abundance framework uses three methods:
 
