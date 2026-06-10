@@ -72,7 +72,7 @@ CRASH/
 │   ├── humann_figures.R        # KO heatmap with KEGG enzyme annotations
 │   └── Strainphlan.R           # StrainPhlAn D-test (MODE: AML / Lymphoma / all)
 │
-├── environments/               # Conda environment YAML files
+├── Environments/               # Conda environment YAML files
 ├── metadata/                   # Metadata for all cohorts
 └── README.md
 ```
@@ -86,17 +86,17 @@ git clone https://github.com/vikkxtar123/CRASH.git
 cd CRASH
 ```
 
-## Conda environments
+## Conda Environments
 
 Each pipeline module uses its own Conda environment. The environment names referenced by the scripts are `kneaddata`, `metaphlan`, `humann4`, `kraken2`, `krakentools`, and `deeparg_env`.
 
 ```bash
-conda env create -f environments/kneaddata.yml       # kneaddata
-conda env create -f environments/metaphlan.yml       # metaphlan  (MetaPhlAn4 + StrainPhlAn4)
-conda env create -f environments/humann4.yml         # humann4
-conda env create -f environments/kraken2.yml         # kraken2
-conda env create -f environments/krakentools.yml     # krakentools (kraken2mpa)
-conda env create -f environments/deeparg.yml         # deeparg_env (Python 2.7)
+conda env create -f Environments/kneaddata.yml       # kneaddata
+conda env create -f Environments/metaphlan.yml       # metaphlan  (MetaPhlAn4 + StrainPhlAn4)
+conda env create -f Environments/humann4.yml         # humann4
+conda env create -f Environments/kraken2.yml         # kraken2
+conda env create -f Environments/krakentools.yml     # krakentools (kraken2mpa)
+conda env create -f Environments/deeparg.yml         # deeparg_env (Python 2.7)
 ```
 
 The R analysis is **not** run through Conda. R scripts were run locally on Windows (R 4.4.0) and on the cluster via `module load R/4.4.0`.
